@@ -115,9 +115,15 @@ export function DashboardClient({
 
   const filteredEquipments = equipments.filter(
     (eq) =>
-      eq.equipmentName.toLowerCase().includes(equipmentSearchQuery.toLowerCase()) ||
-      eq.equipmentType.toLowerCase().includes(equipmentSearchQuery.toLowerCase()) ||
-      eq.description?.toLowerCase().includes(equipmentSearchQuery.toLowerCase()),
+      eq.equipmentName
+        .toLowerCase()
+        .includes(equipmentSearchQuery.toLowerCase()) ||
+      eq.equipmentType
+        .toLowerCase()
+        .includes(equipmentSearchQuery.toLowerCase()) ||
+      eq.description
+        ?.toLowerCase()
+        .includes(equipmentSearchQuery.toLowerCase()),
   );
 
   if (error) {
@@ -509,7 +515,9 @@ export function DashboardClient({
                       <Input
                         placeholder="Search equipment..."
                         value={equipmentSearchQuery}
-                        onChange={(e) => setEquipmentSearchQuery(e.target.value)}
+                        onChange={(e) =>
+                          setEquipmentSearchQuery(e.target.value)
+                        }
                         className="w-64 bg-background pl-10"
                       />
                     </div>
@@ -551,7 +559,10 @@ export function DashboardClient({
                 ) : (
                   <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {filteredEquipments.map((equipment) => (
-                      <LabEquipmentCard key={equipment.id} equipment={equipment} />
+                      <LabEquipmentCard
+                        key={equipment.id}
+                        equipment={equipment}
+                      />
                     ))}
                   </div>
                 )}
