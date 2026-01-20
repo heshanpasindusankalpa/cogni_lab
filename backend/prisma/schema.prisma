@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum UserType {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+}
+
+enum LabCompletionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum StepStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id        String  @id @default(uuid())
+  clerkUserId String @unique
+  username  String?  @unique
+  email     String   @unique
+  passwordHash String?
+  userType  UserType?
+  fullName  String?
+  university String?
+  
+  createdAt DateTime @default(now())
+  lastLogin DateTime?
+
+  // Relations
+  createdModules      Module[]
+  createdLabs         LabInstance[]
+  createdEquipments   LabEquipment[]
+  experimentProgress  ExperimentProgress[]
+
+  @@map("users")
+}
+
+
+model Module {
+  id              String  @id @default(uuid())
+  instructorId    String
+  moduleName      String
+  description     String?
+  moduleCode      String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  instructor      User @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  labInstances    LabInstance[]
+
+  @@map("modules")
+}
+
+model LabInstance {
+  id                  String  @id @default(uuid())
+  instructorId        String
+  moduleId            String
+  labName             String
+  description         String?
+  toleranceMin        Decimal?
+  toleranceMax        Decimal?
+  toleranceUnit       String?
+  completionStatus    LabCompletionStatus @default(NOT_STARTED)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  instructor          User @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  module              Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  experimentSteps     ExperimentStep[]
+  experimentProgress  ExperimentProgress[]
+  labEquipments LabInstanceEquipment[]
+
+  @@map("lab_instances")
+}
+
+model LabInstanceEquipment {
+  id String @id @default(uuid())
+  labId String
+  equipmentId String
+  positionX Int
+  positionY Int
+  positionZ Int
+  configJson Json? // equipment-specific config
+  
+  lab LabInstance @relation(fields: [labId], references: [id], onDelete: Cascade)
+  equipment LabEquipment @relation(fields: [equipmentId], references: [id])
+}
+
+model LabEquipment {
+  id                    String  @id @default(uuid())
+  creatorId             String
+  equipmentType         String  // "oscilloscope", "multimeter", "microscope", "circuits", etc
+  equipmentName         String
+  description           String?
+  supportsConfiguration Boolean @default(false)
+  defaultConfigJson     Json?
+  imageUrl              String?
+  usedInLabs LabInstanceEquipment[]
+  
+  createdAt             DateTime @default(now())
+
+  // Relations
+  creator               User @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@map("lab_equipment")
+}
+
+model ExperimentStep {
+  id              String  @id @default(uuid())
+  labId           String
+  stepNumber      Int
+  stepDescription String
+  procedure       String?
+  minTolerance    Decimal?
+  maxTolerance    Decimal?
+  unit            String?
+  
+  createdAt       DateTime @default(now())
+
+  // Relations
+  lab             LabInstance @relation(fields: [labId], references: [id], onDelete: Cascade)
+  experimentProgress ExperimentProgress[]
+
+  @@map("experiment_steps")
+}
+
+model ExperimentProgress {
+  id                  String  @id @default(uuid())
+  userId              String
+  labId               String
+  stepId              String
+  stepStatus          StepStatus @default(NOT_STARTED)
+  attemptCount        Int @default(0)
+  valueSubmitted      Decimal?
+  isWithinTolerance   Boolean?
+  feedback            String?
+  notes               String?
+  
+  startedAt           DateTime?
+  completedAt         DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  user                User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lab                 LabInstance @relation(fields: [labId], references: [id], onDelete: Cascade)
+  step                ExperimentStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@map("experiment_progress")
+}
+
+
